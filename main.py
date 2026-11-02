@@ -1,42 +1,49 @@
 import os
 import random
 import requests
-import google.generativeai as genai
 from moviepy.editor import VideoFileClip, ImageClip, TextClip, CompositeVideoClip, AudioFileClip
 import cloudinary
 import cloudinary.uploader
 
 # --- 1. إعدادات البيئة والمفاتيح ---
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 BUFFER_ACCESS_TOKEN = os.environ.get("BUFFER_ACCESS_TOKEN")
-BUFFER_PROFILE_IDS = os.environ.get("BUFFER_PROFILE_IDS").split(",")
+# تحويل سلسلة قنوات بافر إلى قائمة
+raw_profiles = os.environ.get("BUFFER_PROFILE_IDS")
+BUFFER_PROFILE_IDS = raw_profiles.split(",") if raw_profiles else []
 
-# إعدادات Cloudinary (يجب إضافتها كأسرار في GitHub)
+# إعدادات Cloudinary
 cloudinary.config(
     cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
     api_key=os.environ.get("CLOUDINARY_API_KEY"),
     api_secret=os.environ.get("CLOUDINARY_API_SECRET")
 )
 
-# --- 2. توليد الفكرة بواسطة Gemini API ---
+# --- 2. توليد الفكرة بواسطة Groq API ---
 def generate_hook():
-    print("[1] جاري توليد الفكرة عبر Gemini...")
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    print("[1] جاري توليد الفكرة عبر Groq API...")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [{
+            "role": "user",
+            "content": "Write a short, tricky, and highly engaging hook text for a YouTube Shorts physics/math video. It must be maximum 2 short lines. Make it provoke curiosity or comments. Output ONLY the hook text, without any quotes or intro."
+        }],
+        "temperature": 0.7
+    }
     
-    prompt = """
-    Write a short, tricky, and highly engaging hook text for a YouTube Shorts physics/math video.
-    It must be maximum 2 short lines. Make it provoke curiosity or comments.
-    Examples:
-    - QUESTION: 8 ÷ 2(2 + 2) = ?
-    - CAN YOU SOLVE THIS?\nWhich way does Gear 7 spin?
-    Output ONLY the hook text, nothing else.
-    """
-    response = model.generate_content(prompt)
-    hook_text = response.text.strip().replace('"', '')
-    print(f"الفكرة: {hook_text}")
-    return hook_text
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        hook_text = response.json()['choices'][0]['message']['content'].strip().replace('"', '')
+        print(f"الفكرة: {hook_text}")
+        return hook_text
+    else:
+        raise Exception(f"Groq API Error: {response.text}")
 
 # --- 3. سحب مقطع محاكاة من Pexels API ---
 def download_video(output_filename="temp_sim.mp4"):
@@ -52,7 +59,6 @@ def download_video(output_filename="temp_sim.mp4"):
         raise Exception("لم يتم العثور على فيديوهات.")
         
     random_video = random.choice(response['videos'])
-    # استخراج رابط أعلى جودة
     hd_file = max(random_video['video_files'], key=lambda x: x['width'])
     video_link = hd_file['link']
     
@@ -89,7 +95,11 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
         
     final_video.write_videofile(output_path, fps=30, codec="libx264", audio_codec="aac", threads=2, preset="ultrafast")
     
-    top_clip.close(); bottom_clip.close(); final_video.close()
+    top_clip.close()
+    bottom_clip.close()
+    if os.path.exists(audio_path):
+        audio_clip.close()
+    final_video.close()
     return output_path
 
 # --- 5. رفع الفيديو لـ Cloudinary للحصول على رابط عام ---
@@ -111,7 +121,6 @@ def publish_to_buffer(video_url, hook_text):
         "media[video]": video_url
     }
     
-    # إضافة القنوات (YouTube, Instagram, TikTok)
     for idx, profile_id in enumerate(BUFFER_PROFILE_IDS):
         data[f"profile_ids[{idx}]"] = profile_id.strip()
         
