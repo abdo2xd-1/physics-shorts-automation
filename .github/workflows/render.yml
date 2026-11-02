@@ -1,9 +1,9 @@
 name: Auto Generate and Publish Shorts
 
 on:
-  workflow_dispatch: # يسمح لك بتشغيله يدوياً بضغطة زر
+  workflow_dispatch: # يسمح لك بتشغيله يدوياً بضغطة زر من GitHub
   schedule:
-    # التشغيل التلقائي يومياً (مثال: الساعة 5 مساءً بتوقيت القاهرة / 15:00 UTC)
+    # التشغيل التلقائي يومياً (الساعة 5 مساءً بتوقيت القاهرة / 15:00 UTC)
     - cron: '0 15 * * *'
 
 jobs:
@@ -24,8 +24,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg imagemagick
-          # تعديل صلاحيات ImageMagick للسماح بكتابة النصوص في MoviePy
-          sudo sed -i 's/<policy domain="path" rights="none" pattern="@\*"/<!-- <policy domain="path" rights="none" pattern="@\*" -->/g' /etc/ImageMagick-6/policy.xml
+          # حذف ملف السياسات لتخطي قيود ImageMagick مع MoviePy وتجنب خطأ التعديل
+          sudo rm -f /etc/ImageMagick-6/policy.xml
+          sudo rm -f /etc/ImageMagick-7/policy.xml
 
       - name: Install Python Packages
         run: |
