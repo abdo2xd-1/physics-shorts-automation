@@ -1,6 +1,12 @@
 import os
 import random
 import requests
+
+# --- حل مشكلة PIL.Image.ANTIALIAS مع الإصدارات الحديثة ---
+from PIL import Image
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
 from moviepy.editor import VideoFileClip, ImageClip, TextClip, CompositeVideoClip, AudioFileClip
 import cloudinary
 import cloudinary.uploader
@@ -33,10 +39,9 @@ def generate_hook():
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب مقطع محاكاة من Pexels API (مع كلمات بحث أوسع لضمان النجاح) ---
+# --- 3. سحب مقطع محاكاة من Pexels API ---
 def download_video(output_filename="temp_sim.mp4"):
     print("[2] جاري البحث عن مقطع محاكاة في Pexels...")
-    # توسيع كلمات البحث لتجنب خطأ عدم وجود فيديوهات
     queries = ["abstract background", "satisfying motion", "loop background", "blue motion", "digital tunnel"]
     query = random.choice(queries)
     
@@ -49,7 +54,7 @@ def download_video(output_filename="temp_sim.mp4"):
         
     data = response.json()
     if not data.get('videos'):
-        raise Exception("لم يتم العثور على فيديوهات في Pexels، تأكد من صحة PEXELS_API_KEY.")
+        raise Exception("لم يتم العثور على فيديوهات في Pexels.")
         
     random_video = random.choice(data['videos'])
     hd_file = max(random_video['video_files'], key=lambda x: x['width'])
