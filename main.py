@@ -7,7 +7,7 @@ from PIL import Image
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
 
-from moviepy.editor import VideoFileClip, ImageClip, TextClip, CompositeVideoClip, AudioFileClip, ColorClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip, ColorClip
 import cloudinary
 import cloudinary.uploader
 
@@ -23,7 +23,7 @@ cloudinary.config(
     api_secret=os.environ.get("CLOUDINARY_API_SECRET")
 )
 
-# --- 2. اختيار أسئلة فيزياء ورياضيات قوية ---
+# --- 2. اختيار الأسئلة والألغاز ---
 def generate_hook():
     print("[1] جاري اختيار فكرة الفيديو...")
     hooks = [
@@ -37,16 +37,15 @@ def generate_hook():
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب فيديوهات فضاء وفيزياء حقيقية حصرياً من Pexels ---
+# --- 3. سحب فيديوهات محاكاة فيزياء دقيقة حصرياً ---
 def download_video(output_filename="temp_sim.mp4"):
-    print("[2] جاري البحث عن مقطع فضاء وفلزياء حقيقي في Pexels...")
-    # كلمات بحث دقيقة جداً تخص الفضاء والثقوب السوداء والفيزياء فقط لمنع أي لقطات غريبة
+    print("[2] جاري البحث عن مقطع فيزياء ومحاكاة في Pexels...")
     queries = [
-        "black hole space animation", 
-        "galaxy universe loop", 
-        "quantum physics animation", 
-        "sci fi space tunnel", 
-        "astrophysics visual"
+        "physics simulation loop", 
+        "gear mechanism animation", 
+        "pendulum physics loop", 
+        "geometry math visual", 
+        "science experiment loop"
     ]
     query = random.choice(queries)
     
@@ -59,7 +58,7 @@ def download_video(output_filename="temp_sim.mp4"):
         
     data = response.json()
     if not data.get('videos'):
-        url = f"https://api.pexels.com/videos/search?query=space+loop&orientation=portrait&per_page=15"
+        url = f"https://api.pexels.com/videos/search?query=satisfying+geometry&orientation=portrait&per_page=15"
         response = requests.get(url, headers=headers)
         data = response.json()
         if not data.get('videos'):
@@ -75,37 +74,40 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج الفيديو بالستايل الاحترافي ---
-def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
-    print("[4] جاري دمج ومونتاج الفيديو بالستايل الصحيح...")
+# --- 4. مونتاج احترافي (فيديو علوي متحرك + خلفية سفلية ثابتة بنمط القنوات الكبرى + نص بارز) ---
+def create_short(video_path, hook_text, audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
+    print("[4] جاري دمج ومونتاج الفيديو بالستايل المطلوب...")
     CANVAS_W, CANVAS_H = 1080, 1920
     
+    # تجهيز فيديو المحاكاة في النصف العلوي فقط (مقياس متناسق 1080x960)
     top_clip = VideoFileClip(video_path).resize(width=CANVAS_W)
     duration = top_clip.duration
     if duration > 30:
         duration = 30
         top_clip = top_clip.subclip(0, 30)
+        
+    top_clip = top_clip.set_position(("center", 0))
     
-    if os.path.exists(image_path):
-        bottom_clip = (ImageClip(image_path)
-                       .resize(width=CANVAS_W)
-                       .set_duration(duration)
-                       .set_position(("center", "bottom")))
-        top_clip = top_clip.set_position(("center", "top"))
-        base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
-    else:
-        bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(10, 10, 15)).set_duration(duration)
-        top_clip = top_clip.set_position(("center", 120))
-        base_video = CompositeVideoClip([bg_clip, top_clip], size=(CANVAS_W, CANVAS_H))
+    # إنشاء خلفية سفلية سينمائية داكنة وفاخرة تملأ النصف السفلي تماماً (بدون الحاجة لصور خارجية)
+    bottom_bg = ColorClip(size=(CANVAS_W, CANVAS_H // 2), color=(15, 15, 22)).set_duration(duration)
+    bottom_bg = bottom_bg.set_position(("center", CANVAS_H // 2))
     
-    txt_clip = (TextClip(hook_text, fontsize=56, color="yellow", font="DejaVu-Sans-Bold", 
+    # خلفية الشاشة الكاملة
+    canvas_bg = ColorClip(size=(CANVAS_W, CANVAS_H), color=(10, 10, 15)).set_duration(duration)
+    
+    # تجميع العناصر الأساسية (الخلفية + الفيديو العلوي + الخلفية السفلية)
+    base_video = CompositeVideoClip([canvas_bg, top_clip, bottom_bg], size=(CANVAS_W, CANVAS_H))
+    
+    # تصميم النص في منتصف الشاشة بخط أصفر كبير وواضح جداً
+    txt_clip = (TextClip(hook_text, fontsize=60, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
                          align="center", size=(CANVAS_W - 100, None))
                 .set_duration(duration)
-                .set_position(("center", "center")))
+                .set_position(("center", CANVAS_H // 2 - 80)))
     
     final_video = CompositeVideoClip([base_video, txt_clip], size=(CANVAS_W, CANVAS_H))
     
+    # إضافة الصوت إذا كان موجوداً
     if os.path.exists(audio_path):
         audio_clip = AudioFileClip(audio_path).subclip(0, duration)
         final_video = final_video.set_audio(audio_clip)
