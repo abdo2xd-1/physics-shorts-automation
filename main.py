@@ -19,36 +19,39 @@ cloudinary.config(
     api_secret=os.environ.get("CLOUDINARY_API_SECRET")
 )
 
-# --- 2. توليد الفكرة محلياً (بدون مشاكل API) ---
+# --- 2. اختيار الفكرة محلياً ---
 def generate_hook():
     print("[1] جاري اختيار فكرة الفيديو...")
     hooks = [
-        "8 ÷ 2(2 + 2) = ?\nCan you solve this without failing?",
+        "8 ÷ 2(2 + 2) = ?\nCan you solve this?",
         "Which way does Gear 7 spin?\nThink carefully!",
-        "If speed of light is constant,\nwhy can't you see your own shadow in the dark?",
-        "99% of people fail this basic math puzzle!",
-        "Can a falling cat always land on its feet? Physics says yes.",
-        "What happens if you fall into a black hole? Watch till the end.",
-        "The paradox that breaks standard physics..."
+        "Can a falling cat always land on its feet?\nPhysics says yes.",
+        "99% of people fail this math puzzle!",
+        "What happens if you fall into a black hole?"
     ]
     hook_text = random.choice(hooks)
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب مقطع محاكاة من Pexels API ---
+# --- 3. سحب مقطع محاكاة من Pexels API (مع كلمات بحث أوسع لضمان النجاح) ---
 def download_video(output_filename="temp_sim.mp4"):
     print("[2] جاري البحث عن مقطع محاكاة في Pexels...")
-    queries = ["3d loop satisfying", "abstract geometry loop", "physics simulation loop"]
+    # توسيع كلمات البحث لتجنب خطأ عدم وجود فيديوهات
+    queries = ["abstract background", "satisfying motion", "loop background", "blue motion", "digital tunnel"]
     query = random.choice(queries)
     
     url = f"https://api.pexels.com/videos/search?query={query}&orientation=portrait&per_page=15"
     headers = {"Authorization": PEXELS_API_KEY}
     
-    response = requests.get(url, headers=headers).json()
-    if not response.get('videos'):
-        raise Exception("لم يتم العثور على فيديوهات.")
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Pexels API Error: {response.text}")
         
-    random_video = random.choice(response['videos'])
+    data = response.json()
+    if not data.get('videos'):
+        raise Exception("لم يتم العثور على فيديوهات في Pexels، تأكد من صحة PEXELS_API_KEY.")
+        
+    random_video = random.choice(data['videos'])
     hd_file = max(random_video['video_files'], key=lambda x: x['width'])
     video_link = hd_file['link']
     
