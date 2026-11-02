@@ -29,7 +29,7 @@ def generate_hook():
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama3-8b-8192",
+        "model": "llama-3.1-8b-instant",
         "messages": [{
             "role": "user",
             "content": "Write a short, tricky, and highly engaging hook text for a YouTube Shorts physics/math video. It must be maximum 2 short lines. Make it provoke curiosity or comments. Output ONLY the hook text, without any quotes or intro."
