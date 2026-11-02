@@ -29,7 +29,7 @@ def generate_hook():
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "mixtral-8x7b-32768",  # تم التحديث إلى النموذج المستقر
+        "model": "llama-3.3-70b-versatile",  # تم التحديث إلى أحدث نموذج مستقر
         "messages": [{
             "role": "user",
             "content": "Write a short, tricky, and highly engaging hook text for a YouTube Shorts physics/math video. It must be maximum 2 short lines. Make it provoke curiosity or comments. Output ONLY the hook text, without any quotes or intro."
