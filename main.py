@@ -7,7 +7,6 @@ import cloudinary.uploader
 
 # --- 1. إعدادات البيئة والمفاتيح ---
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 BUFFER_ACCESS_TOKEN = os.environ.get("BUFFER_ACCESS_TOKEN")
 # تحويل سلسلة قنوات بافر إلى قائمة
 raw_profiles = os.environ.get("BUFFER_PROFILE_IDS")
@@ -20,30 +19,21 @@ cloudinary.config(
     api_secret=os.environ.get("CLOUDINARY_API_SECRET")
 )
 
-# --- 2. توليد الفكرة بواسطة Groq API ---
+# --- 2. توليد الفكرة محلياً (بدون مشاكل API) ---
 def generate_hook():
-    print("[1] جاري توليد الفكرة عبر Groq API...")
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "llama-3.3-70b-versatile",  # تم التحديث إلى أحدث نموذج مستقر
-        "messages": [{
-            "role": "user",
-            "content": "Write a short, tricky, and highly engaging hook text for a YouTube Shorts physics/math video. It must be maximum 2 short lines. Make it provoke curiosity or comments. Output ONLY the hook text, without any quotes or intro."
-        }],
-        "temperature": 0.7
-    }
-    
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        hook_text = response.json()['choices'][0]['message']['content'].strip().replace('"', '')
-        print(f"الفكرة: {hook_text}")
-        return hook_text
-    else:
-        raise Exception(f"Groq API Error: {response.text}")
+    print("[1] جاري اختيار فكرة الفيديو...")
+    hooks = [
+        "8 ÷ 2(2 + 2) = ?\nCan you solve this without failing?",
+        "Which way does Gear 7 spin?\nThink carefully!",
+        "If speed of light is constant,\nwhy can't you see your own shadow in the dark?",
+        "99% of people fail this basic math puzzle!",
+        "Can a falling cat always land on its feet? Physics says yes.",
+        "What happens if you fall into a black hole? Watch till the end.",
+        "The paradox that breaks standard physics..."
+    ]
+    hook_text = random.choice(hooks)
+    print(f"الفكرة: {hook_text}")
+    return hook_text
 
 # --- 3. سحب مقطع محاكاة من Pexels API ---
 def download_video(output_filename="temp_sim.mp4"):
