@@ -37,16 +37,16 @@ def generate_hook():
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب فيديوهات محاكاة فيزياء دقيقة حصرياً ---
+# --- 3. سحب فيديوهات فضاء وفيزياء حقيقية حصرياً من Pexels ---
 def download_video(output_filename="temp_sim.mp4"):
-    print("[2] جاري البحث عن مقطع محاكاة فيزياء حقيقي في Pexels...")
-    # كلمات بحث دقيقة لمنع ظهور أي فيديوهات غريبة
+    print("[2] جاري البحث عن مقطع فضاء وفلزياء حقيقي في Pexels...")
+    # كلمات بحث دقيقة جداً تخص الفضاء والثقوب السوداء والفيزياء فقط لمنع أي لقطات غريبة
     queries = [
-        "physics animation loop", 
-        "pendulum motion physics", 
-        "quantum physics visual", 
-        "math geometry loop", 
-        "science experiment animation"
+        "black hole space animation", 
+        "galaxy universe loop", 
+        "quantum physics animation", 
+        "sci fi space tunnel", 
+        "astrophysics visual"
     ]
     query = random.choice(queries)
     
@@ -59,7 +59,7 @@ def download_video(output_filename="temp_sim.mp4"):
         
     data = response.json()
     if not data.get('videos'):
-        url = f"https://api.pexels.com/videos/search?query=physics+loop&orientation=portrait&per_page=15"
+        url = f"https://api.pexels.com/videos/search?query=space+loop&orientation=portrait&per_page=15"
         response = requests.get(url, headers=headers)
         data = response.json()
         if not data.get('videos'):
@@ -75,7 +75,7 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج الفيديو بالستايل الاحترافي (فيديو علوي + خلفية سفلية نظيفة) ---
+# --- 4. مونتاج الفيديو بالستايل الاحترافي ---
 def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
     print("[4] جاري دمج ومونتاج الفيديو بالستايل الصحيح...")
     CANVAS_W, CANVAS_H = 1080, 1920
@@ -86,7 +86,6 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
         duration = 30
         top_clip = top_clip.subclip(0, 30)
     
-    # دمج الصورة لو موجودة، أو عمل تصميم خلفية داكنة متناسقة في النصف السفلي
     if os.path.exists(image_path):
         bottom_clip = (ImageClip(image_path)
                        .resize(width=CANVAS_W)
@@ -95,12 +94,10 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
         top_clip = top_clip.set_position(("center", "top"))
         base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     else:
-        # خلفية سوداء/داكنة فاخرة تمنع ظهور أي أخطاء أو لقطات عشوائية
         bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(10, 10, 15)).set_duration(duration)
         top_clip = top_clip.set_position(("center", 120))
         base_video = CompositeVideoClip([bg_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     
-    # تنسيق النص في المنتصف بخط واضح
     txt_clip = (TextClip(hook_text, fontsize=56, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
                          align="center", size=(CANVAS_W - 100, None))
