@@ -14,23 +14,21 @@ import cloudinary.uploader
 # --- 1. إعدادات البيئة والمفاتيح ---
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
 BUFFER_ACCESS_TOKEN = os.environ.get("BUFFER_ACCESS_TOKEN")
-# تحويل سلسلة قنوات بافر إلى قائمة
 raw_profiles = os.environ.get("BUFFER_PROFILE_IDS")
 BUFFER_PROFILE_IDS = raw_profiles.split(",") if raw_profiles else []
 
-# إعدادات Cloudinary
 cloudinary.config(
     cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
     api_key=os.environ.get("CLOUDINARY_API_KEY"),
     api_secret=os.environ.get("CLOUDINARY_API_SECRET")
 )
 
-# --- 2. اختيار الفكرة محلياً ---
+# --- 2. اختيار أسئلة فيزياء ورياضيات قوية ---
 def generate_hook():
     print("[1] جاري اختيار فكرة الفيديو...")
     hooks = [
         "8 ÷ 2(2 + 2) = ?\nCan you solve this?",
-        "Which way does Gear 7 spin?\nThink carefully!",
+        "Why time slows down near the speed of light?",
         "Can a falling cat always land on its feet?\nPhysics says yes.",
         "99% of people fail this math puzzle!",
         "What happens if you fall into a black hole?"
@@ -39,16 +37,16 @@ def generate_hook():
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب فيديوهات محاكاة فيزياء ورياضيات حقيقية من Pexels ---
+# --- 3. سحب فيديوهات محاكاة فيزياء دقيقة حصرياً ---
 def download_video(output_filename="temp_sim.mp4"):
-    print("[2] جاري البحث عن مقاطع محاكاة فيزياء ورياضيات في Pexels...")
-    # تم تحديث كلمات البحث لتناسب ستايل قنوات المحاكاة والرياضيات بدقة
+    print("[2] جاري البحث عن مقطع محاكاة فيزياء حقيقي في Pexels...")
+    # كلمات بحث دقيقة لمنع ظهور أي فيديوهات غريبة
     queries = [
-        "physics simulation", 
-        "gear mechanism loop", 
-        "pendulum physics", 
-        "geometry animation", 
-        "satisfying physics"
+        "physics animation loop", 
+        "pendulum motion physics", 
+        "quantum physics visual", 
+        "math geometry loop", 
+        "science experiment animation"
     ]
     query = random.choice(queries)
     
@@ -61,8 +59,7 @@ def download_video(output_filename="temp_sim.mp4"):
         
     data = response.json()
     if not data.get('videos'):
-        # محاولة ثانية بكلمات بحث بديلة لو لمל تجد نتائج
-        url = f"https://api.pexels.com/videos/search?query=abstract+geometry&orientation=portrait&per_page=15"
+        url = f"https://api.pexels.com/videos/search?query=physics+loop&orientation=portrait&per_page=15"
         response = requests.get(url, headers=headers)
         data = response.json()
         if not data.get('videos'):
@@ -78,19 +75,18 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج الفيديو النهائي (فيديو في الأعلى + صورة أينشتاين في الأسفل + نص احترافي) ---
+# --- 4. مونتاج الفيديو بالستايل الاحترافي (فيديو علوي + خلفية سفلية نظيفة) ---
 def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
-    print("[4] جاري دمج ومونتاج الفيديو بالستايل الاحترافي المطلوب...")
+    print("[4] جاري دمج ومونتاج الفيديو بالستايل الصحيح...")
     CANVAS_W, CANVAS_H = 1080, 1920
     
-    # تجهيز فيديو المحاكاة في النصف العلوي
     top_clip = VideoFileClip(video_path).resize(width=CANVAS_W)
     duration = top_clip.duration
     if duration > 30:
         duration = 30
         top_clip = top_clip.subclip(0, 30)
     
-    # وضع صورة أينشتاين في النصف السفلي، وإذا لم تكن موجودة يتم عمل خلفية داكنة متناسقة
+    # دمج الصورة لو موجودة، أو عمل تصميم خلفية داكنة متناسقة في النصف السفلي
     if os.path.exists(image_path):
         bottom_clip = (ImageClip(image_path)
                        .resize(width=CANVAS_W)
@@ -99,11 +95,13 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
         top_clip = top_clip.set_position(("center", "top"))
         base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     else:
-        bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(15, 15, 25)).set_duration(duration)
-        base_video = CompositeVideoClip([bg_clip, top_clip.set_position(("center", "top"))], size=(CANVAS_W, CANVAS_H))
+        # خلفية سوداء/داكنة فاخرة تمنع ظهور أي أخطاء أو لقطات عشوائية
+        bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(10, 10, 15)).set_duration(duration)
+        top_clip = top_clip.set_position(("center", 120))
+        base_video = CompositeVideoClip([bg_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     
-    # تصميم النص الجذاب في منتصف الشاشة بخط واضح
-    txt_clip = (TextClip(hook_text, fontsize=58, color="yellow", font="DejaVu-Sans-Bold", 
+    # تنسيق النص في المنتصف بخط واضح
+    txt_clip = (TextClip(hook_text, fontsize=56, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
                          align="center", size=(CANVAS_W - 100, None))
                 .set_duration(duration)
@@ -111,7 +109,6 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
     
     final_video = CompositeVideoClip([base_video, txt_clip], size=(CANVAS_W, CANVAS_H))
     
-    # إضافة الخلفية الصوتية إذا كانت موجودة
     if os.path.exists(audio_path):
         audio_clip = AudioFileClip(audio_path).subclip(0, duration)
         final_video = final_video.set_audio(audio_clip)
@@ -122,17 +119,16 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
     final_video.close()
     return output_path
 
-# --- 5. رفع الفيديو لـ Cloudinary للحصول على رابط عام ---
+# --- 5. رفع الفيديو لـ Cloudinary ---
 def upload_to_cloud(file_path):
-    print("[5] جاري رفع الفيديو لـ Cloudinary للحصول على رابط...")
+    print("[5] جاري رفع الفيديو لـ Cloudinary...")
     response = cloudinary.uploader.upload_large(file_path, resource_type="video")
     return response['secure_url']
 
-# --- 6. النشر التلقائي عبر Buffer API ---
+# --- 6. النشر التلقائي عبر Buffer ---
 def publish_to_buffer(video_url, hook_text):
-    print("[6] جاري إرسال الفيديو لـ Buffer للجدولة...")
+    print("[6] جاري إرسال الفيديو لـ Buffer...")
     url = "https://api.bufferapp.com/1/updates/create.json"
-    
     text_content = f"{hook_text}\n\n#shorts #physics #math #satisfying #geometry #sigma"
     
     data = {
@@ -146,11 +142,10 @@ def publish_to_buffer(video_url, hook_text):
         
     response = requests.post(url, data=data)
     if response.status_code == 200:
-        print("[نجاح] تم إرسال الفيديو لـ Buffer بنجاح لكل المنصات!")
+        print("[نجاح] تم إرسال الفيديو لـ Buffer بنجاح!")
     else:
         print(f"[خطأ Buffer]: {response.text}")
 
-# --- دورة التشغيل الرئيسية ---
 if __name__ == "__main__":
     try:
         hook = generate_hook()
