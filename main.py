@@ -66,29 +66,49 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج الفيديو النهائي (فيديو في الأعلى + صورة أينشتاين في الأسفل + نص احترافي) ---
+# --- 4. مونتاج الفيديو النهائي بمقاس الشورتس الحقيقي (9:16 بملء الشاشة) ---
 def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
-    print("[4] جاري دمج ومونتاج الفيديو بالشكل الاحترافي...")
+    print("[4] جاري دمج ومونتاج الفيديو بمقاس Shorts حصري...")
     CANVAS_W, CANVAS_H = 1080, 1920
     
-    top_clip = VideoFileClip(video_path).resize(width=CANVAS_W).set_position(("center", "top"))
-    duration = top_clip.duration
+    # تحميل الفيديو وقصه/تكبيره ليملأ الشاشة العمودية بالكامل دون أي فراغات سوداء
+    clip = VideoFileClip(video_path)
+    
+    # حساب الأبعاد لتغطية الشاشة بالكامل (Cover)
+    w, h = clip.size
+    target_aspect = CANVAS_W / CANVAS_H
+    current_aspect = w / h
+    
+    if current_aspect > target_aspect:
+        # الفيديو أعرض من المطلوب، يتم قص الجوانب
+        new_w = int(h * target_aspect)
+        x_center = w // 2
+        clip = clip.crop(x1=x_center - new_w//2, y1=0, x2=x_center + new_w//2, y2=h)
+    else:
+        # الفيديو أطول، يتم قص الأعلى والأسفل
+        new_h = int(w / target_aspect)
+        y_center = h // 2
+        clip = clip.crop(x1=0, y1=y_center - new_h//2, x2=w, y2=y_center + new_h//2)
+        
+    clip = clip.resize((CANVAS_W, CANVAS_H))
+    duration = clip.duration
     if duration > 30:
         duration = 30
-        top_clip = top_clip.subclip(0, 30)
-    
-    # دمج فيديو المحاكاة في الأعلى وصورة أينشتاين في الأسفل (مع وضع احتياطي لو الصورة مش موجودة)
+        clip = clip.subclip(0, 30)
+        
+    # إذا كانت صورة أينشتاين موجودة، نجعلها في النصف السفلي والفيديو في العلوي
     if os.path.exists(image_path):
+        top_clip = VideoFileClip(video_path).resize(width=CANVAS_W).set_position(("center", "top"))
         bottom_clip = (ImageClip(image_path)
                        .resize(width=CANVAS_W)
                        .set_duration(duration)
                        .set_position(("center", "bottom")))
         base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     else:
-        bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(15, 15, 25)).set_duration(duration)
-        base_video = CompositeVideoClip([bg_clip, top_clip.set_position(("center", "center"))], size=(CANVAS_W, CANVAS_H))
+        # لو الصورة مش موجودة، فيديو المحاكاة سيملأ الشاشة بالكامل بـ Shorts Mode
+        base_video = clip.set_duration(duration)
     
-    # تصميم النص في منتصف الشاشة بخط كبير وبارز باللون الأصفر وحدود سوداء
+    # تصميم النص في منتصف الشاشة بخط كبير وبارز
     txt_clip = (TextClip(hook_text, fontsize=60, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
                          align="center", size=(CANVAS_W - 100, None))
@@ -97,14 +117,14 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
     
     final_video = CompositeVideoClip([base_video, txt_clip], size=(CANVAS_W, CANVAS_H))
     
-    # إضافة الخلفية الصوتية إذا كانت موجودة
+    # إضافة الصوت إذا كان موجوداً
     if os.path.exists(audio_path):
         audio_clip = AudioFileClip(audio_path).subclip(0, duration)
         final_video = final_video.set_audio(audio_clip)
         
     final_video.write_videofile(output_path, fps=30, codec="libx264", audio_codec="aac", threads=2, preset="ultrafast")
     
-    top_clip.close()
+    clip.close()
     final_video.close()
     return output_path
 
