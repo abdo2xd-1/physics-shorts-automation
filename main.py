@@ -66,37 +66,38 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج الفيديو النهائي عبر MoviePy (يدعم غياب الملفات الخارجية) ---
+# --- 4. مونتاج الفيديو النهائي (فيديو في الأعلى + صورة أينشتاين في الأسفل + نص احترافي) ---
 def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
-    print("[4] جاري دمج ومونتاج الفيديو...")
+    print("[4] جاري دمج ومونتاج الفيديو بالشكل الاحترافي...")
     CANVAS_W, CANVAS_H = 1080, 1920
     
-    top_clip = VideoFileClip(video_path).resize(width=CANVAS_W)
+    top_clip = VideoFileClip(video_path).resize(width=CANVAS_W).set_position(("center", "top"))
     duration = top_clip.duration
+    if duration > 30:
+        duration = 30
+        top_clip = top_clip.subclip(0, 30)
     
-    # إذا كانت صورة أينشتاين موجودة سيستخدمها، وإذا لم تكن موجودة سينشئ خلفية داكنة احترافية تلقائياً
+    # دمج فيديو المحاكاة في الأعلى وصورة أينشتاين في الأسفل (مع وضع احتياطي لو الصورة مش موجودة)
     if os.path.exists(image_path):
         bottom_clip = (ImageClip(image_path)
                        .resize(width=CANVAS_W)
                        .set_duration(duration)
                        .set_position(("center", "bottom")))
-        top_clip = top_clip.set_position(("center", "top"))
         base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
     else:
-        top_clip = top_clip.resize(height=CANVAS_H).set_position(("center", "center"))
         bg_clip = ColorClip(size=(CANVAS_W, CANVAS_H), color=(15, 15, 25)).set_duration(duration)
-        base_video = CompositeVideoClip([bg_clip, top_clip], size=(CANVAS_W, CANVAS_H))
+        base_video = CompositeVideoClip([bg_clip, top_clip.set_position(("center", "center"))], size=(CANVAS_W, CANVAS_H))
     
-    # إضافة النص الجذاب في الأعلى
-    txt_clip = (TextClip(hook_text, fontsize=52, color="white", font="DejaVu-Sans-Bold", 
+    # تصميم النص في منتصف الشاشة بخط كبير وبارز باللون الأصفر وحدود سوداء
+    txt_clip = (TextClip(hook_text, fontsize=60, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
-                         align="center", size=(CANVAS_W - 120, None))
+                         align="center", size=(CANVAS_W - 100, None))
                 .set_duration(duration)
-                .set_position(("center", 150)))
+                .set_position(("center", "center")))
     
     final_video = CompositeVideoClip([base_video, txt_clip], size=(CANVAS_W, CANVAS_H))
     
-    # إضافة الصوت إذا كان موجوداً
+    # إضافة الخلفية الصوتية إذا كانت موجودة
     if os.path.exists(audio_path):
         audio_clip = AudioFileClip(audio_path).subclip(0, duration)
         final_video = final_video.set_audio(audio_clip)
