@@ -1,0 +1,53 @@
+name: Auto Generate and Publish Shorts
+
+on:
+  workflow_dispatch: # يسمح لك بتشغيله يدوياً بضغطة زر
+  schedule:
+    # التشغيل التلقائي يومياً (مثال: الساعة 5 مساءً بتوقيت القاهرة / 15:00 UTC)
+    - cron: '0 15 * * *'
+
+jobs:
+  build-render-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install System Dependencies (FFmpeg & ImageMagick)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg imagemagick
+          # تعديل صلاحيات ImageMagick للسماح بكتابة النصوص في MoviePy
+          sudo sed -i 's/<policy domain="path" rights="none" pattern="@\*"/<!-- <policy domain="path" rights="none" pattern="@\*" -->/g' /etc/ImageMagick-6/policy.xml
+
+      - name: Install Python Packages
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Automation Script
+        env:
+          # قراءة المفاتيح من إعدادات GitHub Secrets
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_PROFILE_IDS: ${{ secrets.BUFFER_PROFILE_IDS }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          python main.py
+
+      - name: Upload Final Video as Artifact (Backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-generated-short
+          path: final_short.mp4
+          retention-days: 5
