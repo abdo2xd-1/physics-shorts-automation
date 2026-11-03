@@ -7,7 +7,7 @@ from PIL import Image
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
 
-from moviepy.editor import VideoFileClip, ImageClip, TextClip, CompositeVideoClip, AudioFileClip, ColorClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip, ColorClip
 import cloudinary
 import cloudinary.uploader
 
@@ -37,15 +37,16 @@ def generate_hook():
     print(f"الفكرة: {hook_text}")
     return hook_text
 
-# --- 3. سحب فيديوهات محاكاة فيزياء عالية الوضوح حصرياً ---
+# --- 3. سحب فيديوهات فضاء وفيزياء عالية الوضوح حصرياً ---
 def download_video(output_filename="temp_sim.mp4"):
-    print("[2] جاري البحث عن مقطع فيزياء عالي الجودة في Pexels...")
+    print("[2] جاري البحث عن مقطع فضاء وفيزياء في Pexels...")
+    # كلمات بحث دقيقة جداً للفضاء والمحاكاة لضمان عدم ظهور ورش أو أدوات
     queries = [
-        "physics simulation HD", 
-        "gear mechanism loop", 
-        "pendulum physics motion", 
-        "geometry visual satisfying", 
-        "science animation loop"
+        "black hole space animation", 
+        "quantum physics visual loop", 
+        "galaxy universe motion", 
+        "sci fi space tunnel loop", 
+        "astrophysics animation"
     ]
     query = random.choice(queries)
     
@@ -58,14 +59,13 @@ def download_video(output_filename="temp_sim.mp4"):
         
     data = response.json()
     if not data.get('videos'):
-        url = f"https://api.pexels.com/videos/search?query=abstract+motion+loop&orientation=portrait&per_page=15"
+        url = f"https://api.pexels.com/videos/search?query=space+loop&orientation=portrait&per_page=15"
         response = requests.get(url, headers=headers)
         data = response.json()
         if not data.get('videos'):
             raise Exception("لم يتم العثور على فيديوهات في Pexels.")
         
     random_video = random.choice(data['videos'])
-    # اختيار أعلى جودة متاحة (HD / 4K) لضمان عدم البلور أو البكسلة
     hd_file = max(random_video['video_files'], key=lambda x: x['width'] * x['height'])
     video_link = hd_file['link']
     
@@ -75,38 +75,31 @@ def download_video(output_filename="temp_sim.mp4"):
         f.write(vid_data)
     return output_filename
 
-# --- 4. مونتاج احترافي بوضوح علي وتنسيق متكامل ---
-def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
-    print("[4] جاري دمج ومونتاج الفيديو بدقة عالية...")
+# --- 4. مونتاج الشورتس الاحترافي المتناسق ---
+def create_short(video_path, hook_text, audio_path="assets/phonk_track.mp3", output_path="final_short.mp4"):
+    print("[4] جاري دمج ومونتاج الشورتس بدقة عالية...")
     CANVAS_W, CANVAS_H = 1080, 1920
     
-    # ضبط الفيديو العلوي ليملأ النصف العلوي بوضوح تام وتجنب أي ضبابية
+    # تجهيز الفيديو العلوي (يملا النصف العلوي تماماً وبجودة واضحة)
     top_clip = VideoFileClip(video_path)
-    w, h = top_clip.size
-    # قص الفيديو بشكل متناسق للنصف العلوي
-    target_w = CANVAS_W
-    target_h = CANVAS_H // 2
-    top_clip = top_clip.resize(width=target_w).set_position(("center", 0))
+    top_clip = top_clip.resize(width=CANVAS_W).set_position(("center", 0))
     
     duration = top_clip.duration
     if duration > 30:
         duration = 30
         top_clip = top_clip.subclip(0, 30)
         
-    # إذا كانت صورة أينشتاين موجودة في مجلد assets، سيتم وضعها في النصف السفلي باحترافية
-    if os.path.exists(image_path):
-        bottom_clip = (ImageClip(image_path)
-                       .resize(width=CANVAS_W)
-                       .set_duration(duration)
-                       .set_position(("center", CANVAS_H // 2)))
-        base_video = CompositeVideoClip([bottom_clip, top_clip], size=(CANVAS_W, CANVAS_H))
-    else:
-        # لو الصورة مش موجودة، نعمل خلفية سفلية أنيقة (رمادي غامق فخم) بدلاً من الأسود الصامت
-        bg_canvas = ColorClip(size=(CANVAS_W, CANVAS_H), color=(18, 18, 28)).set_duration(duration)
-        bottom_bg = ColorClip(size=(CANVAS_W, CANVAS_H // 2), color=(25, 25, 38)).set_duration(duration).set_position(("center", CANVAS_H // 2))
-        base_video = CompositeVideoClip([bg_canvas, bottom_bg, top_clip], size=(CANVAS_W, CANVAS_H))
+    # تصميم خلفية الشاشة بالكامل (لون داكن فخم)
+    bg_canvas = ColorClip(size=(CANVAS_W, CANVAS_H), color=(12, 12, 18)).set_duration(duration)
     
-    # النص في المنتصف بخط واضح وبارز
+    # تصميم النصف السفلي بخلفية سينمائية متناسقة وفاخرة (بدون شاشة سوداء صامتة)
+    bottom_bg = ColorClip(size=(CANVAS_W, CANVAS_H // 2), color=(20, 20, 30)).set_duration(duration)
+    bottom_bg = bottom_bg.set_position(("center", CANVAS_H // 2))
+    
+    # تجميع الخلفية والفيديو العلوي والخلفية السفلية
+    base_video = CompositeVideoClip([bg_canvas, bottom_bg, top_clip], size=(CANVAS_W, CANVAS_H))
+    
+    # تصميم النص في المنتصف (أصفر بارز بحدود سوداء لضمان الوضوح التام)
     txt_clip = (TextClip(hook_text, fontsize=58, color="yellow", font="DejaVu-Sans-Bold", 
                          stroke_color="black", stroke_width=4, method="caption", 
                          align="center", size=(CANVAS_W - 100, None))
@@ -115,6 +108,7 @@ def create_short(video_path, hook_text, image_path="assets/einstein.jpg", audio_
     
     final_video = CompositeVideoClip([base_video, txt_clip], size=(CANVAS_W, CANVAS_H))
     
+    # إضافة الخلفية الصوتية إذا كانت موجودة
     if os.path.exists(audio_path):
         audio_clip = AudioFileClip(audio_path).subclip(0, duration)
         final_video = final_video.set_audio(audio_clip)
